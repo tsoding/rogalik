@@ -24,9 +24,24 @@ addItem cell item room = room {roomItems = M.insert cell item items}
   where
     items = roomItems room
 
+displayRoomFrame :: Monad m => Room -> StateT Display m ()
+displayRoomFrame room = do
+  let rect@(Rect x y w h) = roomRect room
+  -- Corners
+  putPixel (V2 (x - 1) (y - 1)) '+'
+  putPixel (V2 (x + w) (y - 1)) '+'
+  putPixel (V2 (x - 1) (y + h)) '+'
+  putPixel (V2 (x + w) (y + h)) '+'
+  -- Sides
+  putHorLine (y - 1) x (x + w - 1) '-'
+  putHorLine (y + h) x (x + w - 1) '-'
+  putVertLine (x - 1) y (y + h - 1) '|'
+  putVertLine (x + w) y (y + h - 1) '|'
+
 displayRoom :: Monad m => Room -> StateT Display m ()
 displayRoom room = do
   fillRect (roomRect room) roomFloor
+  displayRoomFrame room
   let roomPos = rectPos $ roomRect room
   for_ (M.toList $ roomItems room) $ \(itemPos, item) ->
     putPixel (roomPos ^+^ itemPos) (itemChar item)

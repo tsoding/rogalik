@@ -62,9 +62,9 @@ generateRogalik =
   where
     roomsIndexRange = (Index 0, Index (roomsCount - 1))
     rooms =
-      [ addItem (V2 3 3) (GoldItem 69) $ mkRoom $ Rect 0 0 10 5
-      , mkRoom $ Rect 20 20 10 10
-      , mkRoom $ Rect 0 20 5 7
+      [ addItem (V2 3 3) (GoldItem 69) $ mkRoom $ Rect 1 1 10 5
+      , mkRoom $ Rect 20 15 10 10
+      , mkRoom $ Rect 1 20 5 7
       ]
     roomsCount = length rooms
 

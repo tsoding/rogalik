@@ -10,7 +10,7 @@ import Display
 import StateT
     
 -- TODO: random level generation based on RNG
--- TODO: frames around the rooms?
+-- TODO: character movement bounding
 -- TODO: passages between the rooms?
 -- TODO: enemies
 -- TODO: floors
