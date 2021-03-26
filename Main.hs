@@ -19,7 +19,7 @@ renderRogalik :: Rogalik -> String
 renderRogalik rogalik =
   renderDisplay $ displayRogalik rogalik stdDisplay
 
-processMoveKey :: Rogalik -> Dir -> Rogalik
+processMoveKey :: Rogalik -> Dir -> IO Rogalik
 processMoveKey rogalik dir = do
     let rogalik' = rogalikMove dir rogalik
     putStrLn $ renderRogalik rogalik'
