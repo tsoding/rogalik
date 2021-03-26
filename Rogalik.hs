@@ -25,8 +25,19 @@ dirV2 D = V2 0 1
 
 data Index a = Index Int deriving (Eq, Ord, Ix, Show)
 
+data Place
+  = PlaceRoom (Index Room)
+  | PlacePassage (Index Passage)
+  deriving (Show)
+
+data Passage = Passage
+  { passageLine :: Line
+  , passageLeftPlace :: Place
+  , passageRigtPlace :: Place
+  } deriving (Show)
+
 data Player = Player
-  { playerRoom :: Index Room
+  { playerPlace :: Place
   , playerPos :: V2
   , playerGold :: Int
   , playerWeapons :: [Weapon]
@@ -37,6 +48,7 @@ updatePlayerPos pos player = player {playerPos = pos}
 
 data Rogalik = Rogalik
   { rogalikRooms :: Array (Index Room) Room
+  , rogalikPassages :: Array (Index Passage) Passage
   , rogalikPlayer :: Player
   , rogalikQuit :: Bool
   } deriving (Show)
@@ -52,13 +64,31 @@ getRoom index = do
 quitRogalik :: Monad m => StateT Rogalik m ()
 quitRogalik = updateState (\rogalik -> rogalik {rogalikQuit = True})
 
+clampPlayer :: Monad m => StateT Rogalik m ()
+clampPlayer = do
+  player <- rogalikPlayer <$> getState
+  player' <-
+    case playerPlace player of
+      PlaceRoom index -> do
+        room <- (! index) . rogalikRooms <$> getState
+        return $
+          updatePlayerPos (clampRect (roomRect room) (playerPos player)) player
+      PlacePassage index -> do
+        passage <- (! index) . rogalikPassages <$> getState
+        return $
+          updatePlayerPos
+            (clampLine (passageLine passage) (playerPos player))
+            player
+  updateState (updateRogalikPlayer player')
+
 generateRogalik :: Rogalik
 generateRogalik =
   Rogalik
     { rogalikRooms = array roomsIndexRange $ zip (range roomsIndexRange) rooms
+    , rogalikPassages = array (Index 1, Index 0) []
     , rogalikPlayer =
         Player
-          { playerRoom = Index 1
+          { playerPlace = PlaceRoom (Index 1)
           , playerPos = V2 0 0
           , playerGold = 0
           , playerWeapons = []
@@ -74,38 +104,19 @@ generateRogalik =
       ]
     roomsCount = length rooms
 
-clampRect :: Rect -> V2 -> V2
-clampRect (Rect x y w h) (V2 x0 y0) =
-  V2 (clamp x0 x (x + w - 1)) (clamp y0 y (y + h - 1))
-  where
-    clamp x l h = min (max x l) h
-
 rogalikMove :: Monad m => Dir -> StateT Rogalik m ()
 rogalikMove dir = do
   player <- rogalikPlayer <$> getState
-  room <- getRoom (playerRoom player)
-  let Rect _ _ w h = roomRect room
   updateState $
     updateRogalikPlayer $
-    updatePlayerPos
-      (clampRect (Rect 0 0 w h) (playerPos player ^+^ dirV2 dir))
-      player
+    updatePlayerPos (playerPos player ^+^ dirV2 dir) player
+  clampPlayer
 
-displayPlayer :: Monad m => Rogalik -> StateT Display m ()
-displayPlayer rogalik = putPixel playerScreenPos playerPixel
-  where
-    player = rogalikPlayer rogalik
-    rooms = rogalikRooms rogalik
-    playerScreenPos = playerRoomPosition ^+^ playerPos player
-    playerRoomPosition =
-      let Rect x y _ _ = roomRect (rooms ! playerRoom player)
-       in V2 x y
-    playerPixel = '@'
-
-displayRooms :: Monad m => Rogalik -> StateT Display m ()
-displayRooms rogalik = for_ (elems $ rogalikRooms rogalik) $ displayRoom
+displayPassage :: Monad m => Passage -> StateT Display m ()
+displayPassage passage = putLine (passageLine passage) '#'
 
 displayRogalik :: Monad m => Rogalik -> StateT Display m ()
 displayRogalik rogalik = do
-  displayRooms rogalik
-  displayPlayer rogalik
+  for_ (elems $ rogalikRooms rogalik) $ displayRoom
+  for_ (elems $ rogalikPassages rogalik) $ displayPassage
+  putPixel (playerPos $ rogalikPlayer rogalik) '@'

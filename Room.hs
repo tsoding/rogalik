@@ -33,10 +33,10 @@ displayRoomFrame room = do
   putPixel (V2 (x - 1) (y + h)) '+'
   putPixel (V2 (x + w) (y + h)) '+'
   -- Sides
-  putHorLine (y - 1) x (x + w - 1) '-'
-  putHorLine (y + h) x (x + w - 1) '-'
-  putVertLine (x - 1) y (y + h - 1) '|'
-  putVertLine (x + w) y (y + h - 1) '|'
+  putLine (Horz (y - 1) x (x + w - 1)) '-'
+  putLine (Horz (y + h) x (x + w - 1)) '-'
+  putLine (Vert (x - 1) y (y + h - 1)) '|'
+  putLine (Vert (x + w) y (y + h - 1)) '|'
 
 displayRoom :: Monad m => Room -> StateT Display m ()
 displayRoom room = do
