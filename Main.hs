@@ -33,8 +33,7 @@ gameLoop rogalik = do
   line <- getLine
   rogalik' <-
     case line of
-      "j" -> do
-        processMoveKey rogalik D
+      "j" -> processMoveKey rogalik D
       "k" -> processMoveKey rogalik U
       "h" -> processMoveKey rogalik L
       "l" -> processMoveKey rogalik R
