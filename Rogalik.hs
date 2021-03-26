@@ -38,7 +38,11 @@ playerMove dir player = player {playerPos = pos ^+^ dirV2 dir}
 data Rogalik = Rogalik
   { rogalikRooms :: Array (Index Room) Room
   , rogalikPlayer :: Player
+  , rogalikQuit :: Bool
   } deriving (Show)
+
+quitRogalik :: Rogalik -> Rogalik
+quitRogalik rogalik = rogalik {rogalikQuit = True}
 
 generateRogalik :: Rogalik
 generateRogalik =
@@ -51,6 +55,7 @@ generateRogalik =
           , playerGold = 0
           , playerWeapons = []
           }
+    , rogalikQuit = False
     }
   where
     roomsIndexRange = (Index 0, Index (roomsCount - 1))
@@ -66,8 +71,8 @@ rogalikMove dir rogalik = rogalik {rogalikPlayer = playerMove dir player}
   where
     player = rogalikPlayer rogalik
 
-renderPlayer :: Rogalik -> Display -> Display
-renderPlayer rogalik display = putPixel playerScreenPos playerPixel display
+displayPlayer :: Rogalik -> Display -> Display
+displayPlayer rogalik display = putPixel playerScreenPos playerPixel display
   where
     player = rogalikPlayer rogalik
     rooms = rogalikRooms rogalik
@@ -77,10 +82,10 @@ renderPlayer rogalik display = putPixel playerScreenPos playerPixel display
        in V2 x y
     playerPixel = '@'
 
-renderRooms :: Rogalik -> Display -> Display
-renderRooms rogalik display =
+displayRooms :: Rogalik -> Display -> Display
+displayRooms rogalik display =
   foldl' (\display room -> renderRoom room display) display $
   elems $ rogalikRooms rogalik
 
-renderRogalik :: Rogalik -> Display -> Display
-renderRogalik rogalik = renderPlayer rogalik . renderRooms rogalik
+displayRogalik :: Rogalik -> Display -> Display
+displayRogalik rogalik = displayPlayer rogalik . displayRooms rogalik

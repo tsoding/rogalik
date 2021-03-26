@@ -24,14 +24,17 @@ data Display = Display
   , displayPixels :: Array V2 Pixel
   } deriving Show
 
-mkDisplay :: V2 -> Pixel -> Display
-mkDisplay size@(V2 width height) pixel = Display size pixels
+stdDisplay :: Display
+stdDisplay = mkDisplay (V2 80 30) ' '
   where
-    cellRange = (V2 0 0, V2 (width - 1) (height - 1))
-    pixels =
-      array cellRange $ do
-        cell <- range cellRange
-        return (cell, pixel)
+    mkDisplay :: V2 -> Pixel -> Display
+    mkDisplay size@(V2 width height) pixel = Display size pixels
+      where
+        cellRange = (V2 0 0, V2 (width - 1) (height - 1))
+        pixels =
+          array cellRange $ do
+            cell <- range cellRange
+            return (cell, pixel)
 
 renderDisplay :: Display -> String
 renderDisplay display =
