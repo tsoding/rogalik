@@ -32,16 +32,22 @@ data Player = Player
   , playerWeapons :: [Weapon]
   } deriving (Show)
 
-playerMove :: Dir -> Player -> Player
-playerMove dir player = player {playerPos = pos ^+^ dirV2 dir}
-  where
-    pos = playerPos player
+updatePlayerPos :: V2 -> Player -> Player
+updatePlayerPos pos player = player {playerPos = pos}
 
 data Rogalik = Rogalik
   { rogalikRooms :: Array (Index Room) Room
   , rogalikPlayer :: Player
   , rogalikQuit :: Bool
   } deriving (Show)
+
+updateRogalikPlayer :: Player -> Rogalik -> Rogalik
+updateRogalikPlayer player rogalik = rogalik {rogalikPlayer = player}
+
+getRoom :: Monad m => Index Room -> StateT Rogalik m Room
+getRoom index = do
+  rooms <- rogalikRooms <$> getState
+  return $ rooms ! index
 
 quitRogalik :: Monad m => StateT Rogalik m ()
 quitRogalik = updateState (\rogalik -> rogalik {rogalikQuit = True})
@@ -68,10 +74,22 @@ generateRogalik =
       ]
     roomsCount = length rooms
 
+clampRect :: Rect -> V2 -> V2
+clampRect (Rect x y w h) (V2 x0 y0) =
+  V2 (clamp x0 x (x + w - 1)) (clamp y0 y (y + h - 1))
+  where
+    clamp x l h = min (max x l) h
+
 rogalikMove :: Monad m => Dir -> StateT Rogalik m ()
 rogalikMove dir = do
-  updateState $ \rogalik ->
-    rogalik {rogalikPlayer = playerMove dir $ rogalikPlayer rogalik}
+  player <- rogalikPlayer <$> getState
+  room <- getRoom (playerRoom player)
+  let Rect _ _ w h = roomRect room
+  updateState $
+    updateRogalikPlayer $
+    updatePlayerPos
+      (clampRect (Rect 0 0 w h) (playerPos player ^+^ dirV2 dir))
+      player
 
 displayPlayer :: Monad m => Rogalik -> StateT Display m ()
 displayPlayer rogalik = putPixel playerScreenPos playerPixel
