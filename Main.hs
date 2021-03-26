@@ -19,6 +19,12 @@ renderRogalik :: Rogalik -> String
 renderRogalik rogalik =
   renderDisplay $ displayRogalik rogalik stdDisplay
 
+processMoveKey :: Rogalik -> Dir -> Rogalik
+processMoveKey rogalik dir = do
+    let rogalik' = rogalikMove dir rogalik
+    putStrLn $ renderRogalik rogalik'
+    return rogalik'
+
 gameLoop :: Rogalik -> IO ()
 gameLoop Rogalik {rogalikQuit = True} = return ()
 gameLoop rogalik = do
@@ -28,21 +34,10 @@ gameLoop rogalik = do
   rogalik' <-
     case line of
       "j" -> do
-        let rogalik' = rogalikMove D rogalik
-        putStrLn $ renderRogalik rogalik'
-        return rogalik'
-      "k" -> do
-        let rogalik' = rogalikMove U rogalik
-        putStrLn $ renderRogalik rogalik'
-        return rogalik'
-      "h" -> do
-        let rogalik' = rogalikMove L rogalik
-        putStrLn $ renderRogalik rogalik'
-        return rogalik'
-      "l" -> do
-        let rogalik' = rogalikMove R rogalik
-        putStrLn $ renderRogalik rogalik'
-        return rogalik'
+        processMoveKey rogalik D
+      "k" -> processMoveKey rogalik U
+      "h" -> processMoveKey rogalik L
+      "l" -> processMoveKey rogalik R
       "q" -> return $ quitRogalik rogalik
       "help" -> do
         printf "Use vim keybindings to navigate loooool\n"
