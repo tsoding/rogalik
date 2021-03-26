@@ -1,25 +1,32 @@
 module StateT where
 
-newtype StateT s a = StateT
-  { runStateT :: s -> (s, a)
+newtype StateT s m h = StateT
+  { runStateT :: s -> m (h, s)
   }
 
-instance Functor (StateT s) where
-  fmap f (StateT run) = StateT $ fmap f . run
+instance Functor m => Functor (StateT s m) where
+  fmap f (StateT run) = StateT $ fmap (\(h, s) -> (f h, s)) . run
 
-instance Applicative (StateT s) where
-  pure x = StateT $ \s -> (s, x)
+instance Monad m => Applicative (StateT s m) where
+  pure = return
   StateT runF <*> StateT runX =
-    StateT $ \s ->
-      let (s', f) = runF s
-          (s'', x) = runX s'
-       in (s'', f x)
+    StateT $ \s -> do
+      (f, s') <- runF s
+      (x, s'') <- runX s'
+      return (f x, s'')
 
-instance Monad (StateT s) where
+instance Monad m => Monad (StateT s m) where
+  return x = StateT $ \s -> return (x, s)
   StateT run >>= f =
-    StateT $ \s ->
-      let (s', x) = run s
-       in runStateT (f x) s'
+    StateT $ \s -> do
+      (x, s') <- run s
+      runStateT (f x) s'
 
-getState :: StateT s s
-getState = StateT $ \s -> (s, s)
+getState :: Monad m => StateT s m s
+getState = StateT $ \s -> return (s, s)
+
+updateState :: Monad m => (s -> s) -> StateT s m ()
+updateState f = StateT $ \s -> return ((), f s)
+
+lift :: Monad m => m h -> StateT s m h
+lift m = StateT $ \s -> (\x -> (x, s)) <$> m

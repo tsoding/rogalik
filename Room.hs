@@ -24,7 +24,7 @@ addItem cell item room = room {roomItems = M.insert cell item items}
   where
     items = roomItems room
 
-displayRoom :: Room -> StateT Display ()
+displayRoom :: Monad m => Room -> StateT Display m ()
 displayRoom room = do
   fillRect (roomRect room) roomFloor
   let roomPos = rectPos $ roomRect room

@@ -43,8 +43,8 @@ data Rogalik = Rogalik
   , rogalikQuit :: Bool
   } deriving (Show)
 
-quitRogalik :: Rogalik -> Rogalik
-quitRogalik rogalik = rogalik {rogalikQuit = True}
+quitRogalik :: Monad m => StateT Rogalik m ()
+quitRogalik = updateState (\rogalik -> rogalik {rogalikQuit = True})
 
 generateRogalik :: Rogalik
 generateRogalik =
@@ -68,12 +68,12 @@ generateRogalik =
       ]
     roomsCount = length rooms
 
-rogalikMove :: Dir -> Rogalik -> Rogalik
-rogalikMove dir rogalik = rogalik {rogalikPlayer = playerMove dir player}
-  where
-    player = rogalikPlayer rogalik
+rogalikMove :: Monad m => Dir -> StateT Rogalik m ()
+rogalikMove dir = do
+  updateState $ \rogalik ->
+    rogalik {rogalikPlayer = playerMove dir $ rogalikPlayer rogalik}
 
-displayPlayer :: Rogalik -> StateT Display ()
+displayPlayer :: Monad m => Rogalik -> StateT Display m ()
 displayPlayer rogalik = putPixel playerScreenPos playerPixel
   where
     player = rogalikPlayer rogalik
@@ -84,10 +84,10 @@ displayPlayer rogalik = putPixel playerScreenPos playerPixel
        in V2 x y
     playerPixel = '@'
 
-displayRooms :: Rogalik -> StateT Display ()
+displayRooms :: Monad m => Rogalik -> StateT Display m ()
 displayRooms rogalik = for_ (elems $ rogalikRooms rogalik) $ displayRoom
 
-displayRogalik :: Rogalik -> StateT Display ()
+displayRogalik :: Monad m => Rogalik -> StateT Display m ()
 displayRogalik rogalik = do
   displayRooms rogalik
   displayPlayer rogalik

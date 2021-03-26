@@ -48,30 +48,31 @@ renderDisplay display =
     V2 width height = displaySize display
     pixels = displayPixels display
 
-putPixel :: V2 -> Pixel -> StateT Display ()
+putPixel :: Monad m => V2 -> Pixel -> StateT Display m ()
 putPixel (V2 x y) = fillRect $ Rect x y 1 1
 
-putVertLine :: Int -> Int -> Int -> Pixel -> StateT Display ()
+putVertLine :: Monad m => Int -> Int -> Int -> Pixel -> StateT Display m ()
 putVertLine x y1 y2 = fillRect $ Rect x y1 1 (y2 - y1 + 1)
 
-putHorLine :: Int -> Int -> Int -> Pixel -> StateT Display ()
+putHorLine :: Monad m => Int -> Int -> Int -> Pixel -> StateT Display m ()
 putHorLine y x1 x2 = fillRect $ Rect x1 y (x2 - x1 + 1) 1
 
-fillRect :: Rect -> Pixel -> StateT Display ()
+fillRect :: Monad m => Rect -> Pixel -> StateT Display m ()
 fillRect (Rect x y w h) pixel =
   StateT $ \display ->
     let V2 width height = displaySize display
         pixels = displayPixels display
-     in ( display
-            { displayPixels =
-                pixels // do
-                  x <- [x .. (x + w - 1)]
-                  y <- [y .. (y + h - 1)]
-                  return (V2 (x `mod` width) (y `mod` height), pixel)
-            }
-        , ())
+     in return
+          ( ()
+          , display
+              { displayPixels =
+                  pixels // do
+                    x <- [x .. (x + w - 1)]
+                    y <- [y .. (y + h - 1)]
+                    return (V2 (x `mod` width) (y `mod` height), pixel)
+              })
 
-fillDisplay :: Pixel -> StateT Display ()
+fillDisplay :: Monad m => Pixel -> StateT Display m ()
 fillDisplay pixel = do
   V2 width height <- displaySize <$> getState
   fillRect (Rect 0 0 width height) pixel

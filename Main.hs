@@ -3,6 +3,7 @@ module Main where
 import Text.Printf
 import System.IO
 import Control.Monad
+import Data.Functor
 
 import Rogalik
 import Display
@@ -16,45 +17,34 @@ import StateT
 -- TODO: potions
 -- ...
 
-renderRogalik :: Rogalik -> String
-renderRogalik rogalik =
-  renderDisplay $ fst $ runStateT (displayRogalik rogalik) stdDisplay
+renderRogalik :: StateT Rogalik IO ()
+renderRogalik = do
+  rogalik <- getState
+  (_, display) <- runStateT (displayRogalik rogalik) stdDisplay
+  lift $ putStrLn $ renderDisplay display
 
-gameLoop :: Rogalik -> IO ()
-gameLoop Rogalik {rogalikQuit = True} = return ()
-gameLoop rogalik = do
-  putStr "> "
-  hFlush stdout
-  line <- getLine
-  rogalik' <-
-    case line of
-      "j" -> do
-        let rogalik' = rogalikMove D rogalik
-        putStrLn $ renderRogalik rogalik'
-        return rogalik'
-      "k" -> do
-        let rogalik' = rogalikMove U rogalik
-        putStrLn $ renderRogalik rogalik'
-        return rogalik'
-      "h" -> do
-        let rogalik' = rogalikMove L rogalik
-        putStrLn $ renderRogalik rogalik'
-        return rogalik'
-      "l" -> do
-        let rogalik' = rogalikMove R rogalik
-        putStrLn $ renderRogalik rogalik'
-        return rogalik'
-      "q" -> return $ quitRogalik rogalik
-      "help" -> do
-        printf "Use vim keybindings to navigate loooool\n"
-        return rogalik
-      _ -> do
-        printf "Unknown command: %s\n" line
-        return rogalik
-  gameLoop rogalik'
+gameLoop :: StateT Rogalik IO ()
+gameLoop = do
+  lift $ putStr "> "
+  lift $ hFlush stdout
+  line <- lift $ getLine
+  case line of
+    "j" -> do
+      rogalikMove D
+      renderRogalik
+    "k" -> do
+      rogalikMove U
+      renderRogalik
+    "h" -> do
+      rogalikMove L
+      renderRogalik
+    "l" -> do
+      rogalikMove R
+      renderRogalik
+    "q" -> quitRogalik
+    "help" -> lift $ printf "Use vim keybindings to navigate loooool\n"
+    _ -> lift $printf "Unknown command: %s\n" line
+  gameLoop
 
 main :: IO ()
-main = do
-  let rogalik = generateRogalik
-  putStrLn $ renderRogalik rogalik
-  gameLoop rogalik
+main = void $ runStateT (renderRogalik >> gameLoop) generateRogalik
