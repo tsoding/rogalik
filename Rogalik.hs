@@ -4,9 +4,9 @@ import Data.Array
 import Data.Ix
 import Data.List
 import Data.Foldable
+import qualified Data.Map as M
 
 import Display
-import Room
 import Items
 import StateT
 
@@ -25,6 +25,42 @@ dirV2 D = V2 0 1
 
 data Index a = Index Int deriving (Eq, Ord, Ix, Show)
 
+data Room = Room
+  { roomRect :: Rect
+  , roomItems :: M.Map V2 Item
+  , roomNbors :: M.Map V2 Place
+  } deriving Show
+
+mkRoom :: Rect -> Room
+mkRoom rect = Room {roomRect = rect, roomItems = M.empty, roomNbors = M.empty}
+
+addItem :: V2 -> Item -> Room -> Room
+addItem cell item room = room {roomItems = M.insert cell item items}
+  where
+    items = roomItems room
+
+displayRoomFrame :: Monad m => Room -> StateT Display m ()
+displayRoomFrame room = do
+  let rect@(Rect x y w h) = roomRect room
+  -- Corners
+  putPixel (V2 (x - 1) (y - 1)) '+'
+  putPixel (V2 (x + w) (y - 1)) '+'
+  putPixel (V2 (x - 1) (y + h)) '+'
+  putPixel (V2 (x + w) (y + h)) '+'
+  -- Sides
+  putLine (Horz (y - 1) x (x + w - 1)) '-'
+  putLine (Horz (y + h) x (x + w - 1)) '-'
+  putLine (Vert (x - 1) y (y + h - 1)) '|'
+  putLine (Vert (x + w) y (y + h - 1)) '|'
+
+displayRoom :: Monad m => Room -> StateT Display m ()
+displayRoom room = do
+  fillRect (roomRect room) '.'
+  displayRoomFrame room
+  let roomPos = rectPos $ roomRect room
+  for_ (M.toList $ roomItems room) $ \(itemPos, item) ->
+    putPixel (roomPos ^+^ itemPos) (itemChar item)
+
 data Place
   = PlaceRoom (Index Room)
   | PlacePassage (Index Passage)
@@ -32,8 +68,7 @@ data Place
 
 data Passage = Passage
   { passageLine :: Line
-  , passageLeftPlace :: Place
-  , passageRigtPlace :: Place
+  , passageNbors :: M.Map V2 Place
   } deriving (Show)
 
 data Player = Player
@@ -85,10 +120,11 @@ generateRogalik :: Rogalik
 generateRogalik =
   Rogalik
     { rogalikRooms = array roomsIndexRange $ zip (range roomsIndexRange) rooms
-    , rogalikPassages = array (Index 1, Index 0) []
+    , rogalikPassages =
+        array passagesIndexRange $ zip (range passagesIndexRange) passages
     , rogalikPlayer =
         Player
-          { playerPlace = PlaceRoom (Index 1)
+          { playerPlace = PlaceRoom (Index 0)
           , playerPos = V2 0 0
           , playerGold = 0
           , playerWeapons = []
@@ -103,6 +139,9 @@ generateRogalik =
       , mkRoom $ Rect 1 20 5 7
       ]
     roomsCount = length rooms
+    passagesIndexRange = (Index 0, Index (passagesCount - 1))
+    passages = [Passage (Vert 5 7 15) M.empty]
+    passagesCount = length passages
 
 rogalikMove :: Monad m => Dir -> StateT Rogalik m ()
 rogalikMove dir = do
