@@ -1,5 +1,7 @@
 module Display where
 
+import StateT
+
 import Data.Ix
 import Data.Array
 
@@ -18,6 +20,9 @@ data Rect =
        Int
        Int
   deriving (Show)
+
+rectPos :: Rect -> V2
+rectPos (Rect x y _ _) = V2 x y
 
 data Display = Display
   { displaySize :: V2
@@ -43,29 +48,30 @@ renderDisplay display =
     V2 width height = displaySize display
     pixels = displayPixels display
 
-putPixel :: V2 -> Pixel -> Display -> Display
+putPixel :: V2 -> Pixel -> StateT Display ()
 putPixel (V2 x y) = fillRect $ Rect x y 1 1
 
-putVertLine :: Int -> Int -> Int -> Pixel -> Display -> Display
+putVertLine :: Int -> Int -> Int -> Pixel -> StateT Display ()
 putVertLine x y1 y2 = fillRect $ Rect x y1 1 (y2 - y1 + 1)
 
-putHorLine :: Int -> Int -> Int -> Pixel -> Display -> Display
+putHorLine :: Int -> Int -> Int -> Pixel -> StateT Display ()
 putHorLine y x1 x2 = fillRect $ Rect x1 y (x2 - x1 + 1) 1
 
-fillRect :: Rect -> Pixel -> Display -> Display
-fillRect (Rect x y w h) pixel display =
-  display
-    { displayPixels =
-        pixels // do
-          x <- [x .. (x + w - 1)]
-          y <- [y .. (y + h - 1)]
-          return (V2 (x `mod` width) (y `mod` height), pixel)
-    }
-  where
-    V2 width height = displaySize display
-    pixels = displayPixels display
+fillRect :: Rect -> Pixel -> StateT Display ()
+fillRect (Rect x y w h) pixel =
+  StateT $ \display ->
+    let V2 width height = displaySize display
+        pixels = displayPixels display
+     in ( display
+            { displayPixels =
+                pixels // do
+                  x <- [x .. (x + w - 1)]
+                  y <- [y .. (y + h - 1)]
+                  return (V2 (x `mod` width) (y `mod` height), pixel)
+            }
+        , ())
 
-fillDisplay :: Pixel -> Display -> Display
-fillDisplay pixel display = fillRect (Rect 0 0 width height) pixel display
-  where
-    V2 width height = displaySize display
+fillDisplay :: Pixel -> StateT Display ()
+fillDisplay pixel = do
+  V2 width height <- displaySize <$> getState
+  fillRect (Rect 0 0 width height) pixel

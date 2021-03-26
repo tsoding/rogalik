@@ -3,10 +3,12 @@ module Rogalik where
 import Data.Array
 import Data.Ix
 import Data.List
+import Data.Foldable
 
 import Display
 import Room
 import Items
+import StateT
 
 data Dir
   = L
@@ -71,8 +73,8 @@ rogalikMove dir rogalik = rogalik {rogalikPlayer = playerMove dir player}
   where
     player = rogalikPlayer rogalik
 
-displayPlayer :: Rogalik -> Display -> Display
-displayPlayer rogalik display = putPixel playerScreenPos playerPixel display
+displayPlayer :: Rogalik -> StateT Display ()
+displayPlayer rogalik = putPixel playerScreenPos playerPixel
   where
     player = rogalikPlayer rogalik
     rooms = rogalikRooms rogalik
@@ -82,10 +84,10 @@ displayPlayer rogalik display = putPixel playerScreenPos playerPixel display
        in V2 x y
     playerPixel = '@'
 
-displayRooms :: Rogalik -> Display -> Display
-displayRooms rogalik display =
-  foldl' (\display room -> renderRoom room display) display $
-  elems $ rogalikRooms rogalik
+displayRooms :: Rogalik -> StateT Display ()
+displayRooms rogalik = for_ (elems $ rogalikRooms rogalik) $ displayRoom
 
-displayRogalik :: Rogalik -> Display -> Display
-displayRogalik rogalik = displayPlayer rogalik . displayRooms rogalik
+displayRogalik :: Rogalik -> StateT Display ()
+displayRogalik rogalik = do
+  displayRooms rogalik
+  displayPlayer rogalik

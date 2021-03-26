@@ -2,8 +2,11 @@ module Room where
 
 import Display
 import Items
+import StateT
+
 import qualified Data.Map as M
 import Data.List
+import Data.Foldable
 
 data Room = Room
   { roomRect :: Rect
@@ -21,16 +24,13 @@ addItem cell item room = room {roomItems = M.insert cell item items}
   where
     items = roomItems room
 
-renderRoom :: Room -> Display -> Display
-renderRoom room display =
-  foldl'
-    (\display ((V2 itemX itemY), item) ->
-       putPixel (V2 (itemX + roomX) (itemY + roomY)) (itemChar item) display)
-    (fillRect (roomRect room) roomFloor display) $
-  M.toList $ roomItems room
-  where
-    Rect roomX roomY _ _ = roomRect room
-
+displayRoom :: Room -> StateT Display ()
+displayRoom room = do
+  fillRect (roomRect room) roomFloor
+  let roomPos = rectPos $ roomRect room
+  for_ (M.toList $ roomItems room) $ \(itemPos, item) ->
+    putPixel (roomPos ^+^ itemPos) (itemChar item)
+    
 testRoom :: Room
 testRoom =
   addItem (V2 1 1) (WeaponItem Sword) $

@@ -6,7 +6,8 @@ import Control.Monad
 
 import Rogalik
 import Display
-
+import StateT
+    
 -- TODO: random level generation based on RNG
 -- TODO: frames around the rooms?
 -- TODO: passages between the rooms?
@@ -17,7 +18,7 @@ import Display
 
 renderRogalik :: Rogalik -> String
 renderRogalik rogalik =
-  renderDisplay $ displayRogalik rogalik stdDisplay
+  renderDisplay $ fst $ runStateT (displayRogalik rogalik) stdDisplay
 
 gameLoop :: Rogalik -> IO ()
 gameLoop Rogalik {rogalikQuit = True} = return ()
