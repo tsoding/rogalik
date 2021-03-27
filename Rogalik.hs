@@ -63,14 +63,18 @@ updatePlayerPos pos player = player {playerPos = pos}
 data FloorCell
   = Empty
   | RoomFloor
-  | Wall
+  | VertWall
+  | HorzWall
+  | Passage
   | Door
   deriving (Show)
 
 floorCellToChar :: FloorCell -> Char
 floorCellToChar Empty = ' '
 floorCellToChar RoomFloor = '.'
-floorCellToChar Wall = '#'
+floorCellToChar VertWall = '|'
+floorCellToChar HorzWall = '-'
+floorCellToChar Passage = '#'
 floorCellToChar Door = '+'
 
 data Rogalik = Rogalik
@@ -82,15 +86,26 @@ data Rogalik = Rogalik
 quitRogalik :: Monad m => StateT Rogalik m ()
 quitRogalik = updateState (\rogalik -> rogalik {rogalikQuit = True})
 
-generateRogalik :: Int -> Int -> Rogalik
-generateRogalik width height =
+emptyRogalik :: Int -> Int -> Rogalik
+emptyRogalik width height =
   Rogalik
     { rogalikBoard = board
     , rogalikPlayerPos = fst $ bounds $ boardArray board
     , rogalikQuit = False
     }
   where
-    board = mkBoard width height RoomFloor
+    board = mkBoard width height Empty
+
+generateRoomRect :: Monad m => Rect -> StateT Rogalik m ()
+generateRoomRect _ = return ()
+
+generateRooms :: Monad m => StateT Rogalik m ()
+generateRooms = do
+  generateRoomRect (Rect (Cell 1 1) (Cell 5 5))
+
+generateRogalik :: Monad m => StateT Rogalik m ()
+generateRogalik = do
+  generateRooms
 
 rogalikMove :: Monad m => Dir -> StateT Rogalik m ()
 rogalikMove dir = do

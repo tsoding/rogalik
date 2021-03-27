@@ -47,8 +47,13 @@ gameLoop =
         printRogalik
       "q" -> quitRogalik
       "help" -> lift $ printf "Use vim keybindings to navigate loooool\n"
-      _ -> lift $printf "Unknown command: %s\n" line
+      _ -> lift $ printf "Unknown command: %s\n" line
     gameLoop
 
 main :: IO ()
-main = void $ runStateT (printRogalik >> gameLoop) $ generateRogalik 80 30
+main =
+  evalStateT
+    (do generateRogalik
+        printRogalik
+        gameLoop) $
+  emptyRogalik 80 30
