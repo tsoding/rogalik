@@ -22,6 +22,9 @@ instance Monad m => Monad (StateT s m) where
       (x, s') <- run s
       runStateT (f x) s'
 
+execStateT :: Functor m => StateT s m h -> s -> m s
+execStateT st s = snd <$> runStateT st s
+
 getState :: Monad m => StateT s m s
 getState = StateT $ \s -> return (s, s)
 

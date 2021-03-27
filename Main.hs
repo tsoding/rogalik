@@ -6,9 +6,9 @@ import Control.Monad
 import Data.Functor
 
 import Rogalik
-import Display
+import Board
 import StateT
-    
+
 -- TODO: random level generation based on RNG
 -- TODO: passages between the rooms?
 -- TODO: enemies
@@ -16,11 +16,10 @@ import StateT
 -- TODO: potions
 -- ...
 
-renderRogalik :: StateT Rogalik IO ()
-renderRogalik = do
+printRogalik :: StateT Rogalik IO ()
+printRogalik = do
   rogalik <- getState
-  (_, display) <- runStateT (displayRogalik rogalik) stdDisplay
-  lift $ putStrLn $ renderDisplay display
+  lift $ putStrLn $ unlines $ renderRogalik rogalik
 
 unlessM :: Monad m => m Bool -> m () -> m ()
 unlessM conditionM body = do
@@ -36,20 +35,20 @@ gameLoop =
     case line of
       "j" -> do
         rogalikMove D
-        renderRogalik
+        printRogalik
       "k" -> do
         rogalikMove U
-        renderRogalik
+        printRogalik
       "h" -> do
         rogalikMove L
-        renderRogalik
+        printRogalik
       "l" -> do
         rogalikMove R
-        renderRogalik
+        printRogalik
       "q" -> quitRogalik
       "help" -> lift $ printf "Use vim keybindings to navigate loooool\n"
       _ -> lift $printf "Unknown command: %s\n" line
     gameLoop
 
 main :: IO ()
-main = void $ runStateT (renderRogalik >> gameLoop) generateRogalik
+main = void $ runStateT (printRogalik >> gameLoop) $ generateRogalik 80 30
