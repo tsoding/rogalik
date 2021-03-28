@@ -57,9 +57,6 @@ data Player = Player
   , playerWeapons :: [Weapon]
   } deriving (Show)
 
-updatePlayerPos :: Cell -> Player -> Player
-updatePlayerPos pos player = player {playerPos = pos}
-
 data FloorCell
   = Empty
   | RoomFloor
@@ -83,6 +80,11 @@ data Rogalik = Rogalik
   , rogalikQuit :: Bool
   } deriving (Show)
 
+rogalikUpdateBoard :: Monad m => StateT (Board FloorCell) m () -> StateT Rogalik m ()
+rogalikUpdateBoard boardState = StateT $ \rogalik -> do
+  board' <- execStateT boardState $ rogalikBoard rogalik
+  return ((), rogalik { rogalikBoard = board' })
+
 quitRogalik :: Monad m => StateT Rogalik m ()
 quitRogalik = updateState (\rogalik -> rogalik {rogalikQuit = True})
 
@@ -97,7 +99,7 @@ emptyRogalik width height =
     board = mkBoard width height Empty
 
 generateRoomRect :: Monad m => Rect -> StateT Rogalik m ()
-generateRoomRect _ = return ()
+generateRoomRect rect = rogalikUpdateBoard $ fillRect rect RoomFloor
 
 generateRooms :: Monad m => StateT Rogalik m ()
 generateRooms = do
