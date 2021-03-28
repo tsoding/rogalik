@@ -56,4 +56,4 @@ main =
     (do generateRogalik
         printRogalik
         gameLoop) $
-  emptyRogalik 80 30
+  emptyRogalik 10 10
