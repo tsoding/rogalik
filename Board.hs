@@ -13,11 +13,14 @@ data Cell = Cell
   , cellCol :: Int
   } deriving (Eq, Ord, Ix, Show)
 
+liftCell2 :: (Int -> Int -> Int) -> Cell -> Cell -> Cell
+liftCell2 op (Cell row1 col1) (Cell row2 col2) = Cell (row1 `op` row2) (col1 `op` col2)
+
 (^+^) :: Cell -> Cell -> Cell
-(^+^) (Cell row1 col1) (Cell row2 col2) = Cell (row1 + row2) (col1 + col2)
+(^+^) = liftCell2 (+)
 
 (^-^) :: Cell -> Cell -> Cell
-(^-^) (Cell row1 col1) (Cell row2 col2) = Cell (row1 - row2) (col1 - col2)
+(^-^) = liftCell2 (-)
 
 data Rect = Rect
   { rectCell1 :: Cell
@@ -33,6 +36,14 @@ clampRect (Rect (Cell row1 col1) (Cell row2 col2)) (Cell row col) =
 data Board a = Board
   { boardArray :: Array Cell a
   } deriving (Show, Functor)
+
+(^!^) :: Board a -> Cell -> a
+(^!^) board cell = boardArray board ! wrapCell board cell
+
+wrapCell :: Board a -> Cell -> Cell
+wrapCell board cell = liftCell2 mod (cell ^-^ offset) size ^+^ offset
+  where (offset, t) = bounds $ boardArray board
+        size = t ^-^ offset
 
 mkBoard :: Int -> Int -> a -> Board a
 mkBoard width height a =
@@ -54,7 +65,7 @@ fillRect (Rect cell1 cell2) a =
      in return
           ( ()
           , board
-              {boardArray = pixels // zip (range (cell1, cell2)) (cycle [a])})
+              {boardArray = pixels // zip (map (wrapCell board) $ range (cell1, cell2)) (cycle [a])})
 
 fillBoard :: Monad m => a -> StateT (Board a) m ()
 fillBoard a = do

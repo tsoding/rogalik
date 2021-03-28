@@ -122,7 +122,7 @@ rogalikMove dir = updateState $ \rogalik ->
   let playerPos = rogalikPlayerPos rogalik
       playerPos' = playerPos ^+^ dirV2 dir
       board = rogalikBoard rogalik
-   in if floorCellWalkable $ (boardArray board) ! playerPos'
+   in if floorCellWalkable $ board ^!^ playerPos'
       then rogalik {rogalikPlayerPos = playerPos'}
       else rogalik
 
