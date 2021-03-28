@@ -112,10 +112,13 @@ generateRoomRect rect@(Rect (Cell row1 col1) (Cell row2 col2)) = rogalikUpdateBo
   modify $ fillRect (Rect (Cell row2 col1) (Cell row2 col2)) HorzWall
   modify $ fillRect (shrinkRect 1 rect) RoomFloor
 
+generateRoomAt :: Monad m => Cell -> Int -> Int -> StateT Rogalik m ()
+generateRoomAt pos rows cols = generateRoomRect (Rect pos (pos ^+^ Cell (rows - 1) (cols - 1)))
+
 generateRooms :: Monad m => StateT Rogalik m ()
 generateRooms = do
-  generateRoomRect (Rect (Cell 1 1) (Cell 7 7))
-  generateRoomRect (Rect (Cell 1 9) (Cell (1 + 3) (9 + 3)))
+  generateRoomAt (Cell 1 1) 7 7
+  generateRoomAt (Cell 1 9) 4 4
   rogalikUpdateBoard $ do 
     modify $ fillRect (Rect (Cell 2 7) (Cell 2 9)) Passage
     modify $ fillCell (Cell 2 7) Door
