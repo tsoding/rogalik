@@ -7,5 +7,7 @@
 ## Quick Start
 
 ```console
-$ runghc Main.hs
+$ ghci Main.hs
+λ> main
+> help
 ```
