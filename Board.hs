@@ -27,6 +27,9 @@ data Rect = Rect
   , rectCell2 :: Cell
   } deriving (Show)
 
+shrinkRect :: Int -> Rect -> Rect
+shrinkRect s (Rect cell1 cell2) = Rect (cell1 ^+^ Cell s s) (cell2 ^-^ Cell s s)
+
 clampRect :: Rect -> Cell -> Cell
 clampRect (Rect (Cell row1 col1) (Cell row2 col2)) (Cell row col) =
   Cell (clamp row row1 row2) (clamp col col1 col2)
