@@ -41,10 +41,10 @@ addItem cell item room = room {roomItems = M.insert cell item items}
 
 displayRoom :: Monad m => Room -> StateT (Board Char) m ()
 displayRoom room = do
-  fillRect (roomRect room) '.'
+  modify $ fillRect (roomRect room) '.'
   let roomPos = rectCell1 $ roomRect room
   for_ (M.toList $ roomItems room) $ \(itemPos, item) ->
-    fillCell (roomPos ^+^ itemPos) (itemChar item)
+    modify $ fillCell (roomPos ^+^ itemPos) (itemChar item)
 
 data Place
   = PlaceRoom (Index Room)
@@ -108,20 +108,20 @@ emptyRogalik width height =
 
 generateRoomRect :: Monad m => Rect -> StateT Rogalik m ()
 generateRoomRect rect@(Rect (Cell row1 col1) (Cell row2 col2)) = rogalikUpdateBoard $ do
-  fillRect (Rect (Cell row1 col1) (Cell row2 col1)) VertWall
-  fillRect (Rect (Cell row1 col2) (Cell row2 col2)) VertWall
-  fillRect (Rect (Cell row1 col1) (Cell row1 col2)) HorzWall
-  fillRect (Rect (Cell row2 col1) (Cell row2 col2)) HorzWall
-  fillRect (shrinkRect 1 rect) RoomFloor
+  modify $ fillRect (Rect (Cell row1 col1) (Cell row2 col1)) VertWall
+  modify $ fillRect (Rect (Cell row1 col2) (Cell row2 col2)) VertWall
+  modify $ fillRect (Rect (Cell row1 col1) (Cell row1 col2)) HorzWall
+  modify $ fillRect (Rect (Cell row2 col1) (Cell row2 col2)) HorzWall
+  modify $ fillRect (shrinkRect 1 rect) RoomFloor
 
 generateRooms :: Monad m => StateT Rogalik m ()
 generateRooms = do
   generateRoomRect (Rect (Cell 1 1) (Cell 7 7))
   generateRoomRect (Rect (Cell 1 9) (Cell (1 + 3) (9 + 3)))
   rogalikUpdateBoard $ do 
-    fillRect (Rect (Cell 2 7) (Cell 2 9)) Passage
-    fillCell (Cell 2 7) Door
-    fillCell (Cell 2 9) Door
+    modify $ fillRect (Rect (Cell 2 7) (Cell 2 9)) Passage
+    modify $ fillCell (Cell 2 7) Door
+    modify $ fillCell (Cell 2 9) Door
 
 generateRogalik :: Monad m => StateT Rogalik m ()
 generateRogalik = do
@@ -140,5 +140,5 @@ renderRogalik :: Rogalik -> [String]
 renderRogalik rogalik =
   boardToLists $
   runIdentity $
-  execStateT (do fillCell (rogalikPlayerPos rogalik) '@') $
+  execStateT (do modify $ fillCell (rogalikPlayerPos rogalik) '@') $
   floorCellToChar <$> rogalikBoard rogalik

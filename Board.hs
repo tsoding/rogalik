@@ -1,8 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 module Board where
 
-import Control.Monad.Trans.State
-
 import Data.Ix
 import Data.Array
 import Data.List
@@ -26,6 +24,9 @@ data Rect = Rect
   { rectCell1 :: Cell
   , rectCell2 :: Cell
   } deriving (Show)
+
+boardRect :: Board a -> Rect
+boardRect board = uncurry Rect $ bounds $ boardArray board
 
 shrinkRect :: Int -> Rect -> Rect
 shrinkRect s (Rect cell1 cell2) = Rect (cell1 ^+^ Cell s s) (cell2 ^-^ Cell s s)
@@ -58,21 +59,13 @@ boardToLists :: Board a -> [[a]]
 boardToLists (Board pixels) =
   map (map snd) $ groupBy ((==) `on` (cellRow . fst)) $ assocs pixels
 
-fillCell :: Monad m => Cell -> a -> StateT (Board a) m ()
+fillCell :: Cell -> a -> Board a -> Board a
 fillCell cell = fillRect (Rect cell cell)
 
-fillRect :: Monad m => Rect -> a -> StateT (Board a) m ()
-fillRect (Rect cell1 cell2) a =
-  StateT $ \board ->
-    let pixels = boardArray board
-     in return
-          ( ()
-          , board
-              {boardArray = pixels // zip (map (wrapCell board) $ range (cell1, cell2)) (cycle [a])})
+fillRect :: Rect -> a -> Board a -> Board a
+fillRect (Rect cell1 cell2) a board = board {boardArray = pixels // patch}
+  where pixels = boardArray board
+        patch = zip (map (wrapCell board) $ range (cell1, cell2)) (cycle [a])
 
-fillBoard :: Monad m => a -> StateT (Board a) m ()
-fillBoard a = do
-  StateT $ \board ->
-    let pixels = boardArray board
-     in return
-          ((), board {boardArray = pixels // zip (indices pixels) (cycle [a])})
+fillBoard :: a -> Board a -> Board a
+fillBoard a board = fillRect (boardRect board) a board
