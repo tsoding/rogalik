@@ -12,7 +12,6 @@ import Rogalik
 import Board
 
 -- TODO: random level generation based on RNG
--- TODO: passages between the rooms?
 -- TODO: enemies
 -- TODO: floors
 -- TODO: potions

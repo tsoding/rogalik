@@ -116,7 +116,9 @@ generateRoomRect rect@(Rect (Cell row1 col1) (Cell row2 col2)) = rogalikUpdateBo
 
 generateRooms :: Monad m => StateT Rogalik m ()
 generateRooms = do
-  generateRoomRect (Rect (Cell 1 1) (Cell 5 5))
+  generateRoomRect (Rect (Cell 1 1) (Cell 7 7))
+  generateRoomRect (Rect (Cell 1 9) (Cell (1 + 3) (9 + 3)))
+  rogalikUpdateBoard $ fillRect (Rect (Cell 2 7) (Cell 2 9)) Passage
 
 generateRogalik :: Monad m => StateT Rogalik m ()
 generateRogalik = do
