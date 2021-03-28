@@ -1,8 +1,6 @@
 module Rogalik where
 
 import Data.Array
-import Data.Ix
-import Data.List
 import Data.Foldable
 import qualified Data.Map as M
 import Data.Functor.Identity
@@ -129,8 +127,7 @@ generateRogalik = do
 
 rogalikMove :: Monad m => Dir -> StateT Rogalik m ()
 rogalikMove dir = modify $ \rogalik ->
-  let playerPos = rogalikPlayerPos rogalik
-      playerPos' = playerPos ^+^ dirV2 dir
+  let playerPos' = rogalikPlayerPos rogalik^+^ dirV2 dir
       board = rogalikBoard rogalik
    in if floorCellWalkable $ board ^!^ playerPos'
       then rogalik {rogalikPlayerPos = playerPos'}

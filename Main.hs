@@ -3,13 +3,11 @@ module Main where
 import Text.Printf
 import System.IO
 import Control.Monad
-import Data.Functor
 import Control.Monad.Trans.State
 import Control.Monad.Trans.Class
 import Data.Foldable
 
 import Rogalik
-import Board
 
 -- TODO: random level generation based on RNG
 -- TODO: enemies
