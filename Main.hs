@@ -4,10 +4,11 @@ import Text.Printf
 import System.IO
 import Control.Monad
 import Data.Functor
+import Control.Monad.Trans.State
+import Control.Monad.Trans.Class
 
 import Rogalik
 import Board
-import StateT
 
 -- TODO: random level generation based on RNG
 -- TODO: passages between the rooms?
@@ -18,7 +19,7 @@ import StateT
 
 printRogalik :: StateT Rogalik IO ()
 printRogalik = do
-  rogalik <- getState
+  rogalik <- get
   lift $ putStrLn $ unlines $ renderRogalik rogalik
 
 unlessM :: Monad m => m Bool -> m () -> m ()
@@ -28,7 +29,7 @@ unlessM conditionM body = do
 
 gameLoop :: StateT Rogalik IO ()
 gameLoop =
-  unlessM (rogalikQuit <$> getState) $ do
+  unlessM (rogalikQuit <$> get) $ do
     lift $ putStr "> "
     lift $ hFlush stdout
     line <- lift $ getLine

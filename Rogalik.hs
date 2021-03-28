@@ -9,7 +9,7 @@ import Data.Functor.Identity
 
 import Board
 import Items
-import StateT
+import Control.Monad.Trans.State
 
 data Dir
   = L
@@ -94,7 +94,7 @@ rogalikUpdateBoard boardState = StateT $ \rogalik -> do
   return ((), rogalik { rogalikBoard = board' })
 
 quitRogalik :: Monad m => StateT Rogalik m ()
-quitRogalik = updateState (\rogalik -> rogalik {rogalikQuit = True})
+quitRogalik = modify (\rogalik -> rogalik {rogalikQuit = True})
 
 emptyRogalik :: Int -> Int -> Rogalik
 emptyRogalik width height =
@@ -118,7 +118,7 @@ generateRogalik = do
   generateRooms
 
 rogalikMove :: Monad m => Dir -> StateT Rogalik m ()
-rogalikMove dir = updateState $ \rogalik ->
+rogalikMove dir = modify $ \rogalik ->
   let playerPos = rogalikPlayerPos rogalik
       playerPos' = playerPos ^+^ dirV2 dir
       board = rogalikBoard rogalik

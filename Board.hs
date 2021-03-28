@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 module Board where
 
-import StateT
+import Control.Monad.Trans.State
 
 import Data.Ix
 import Data.Array
