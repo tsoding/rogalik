@@ -74,6 +74,14 @@ floorCellToChar HorzWall = '-'
 floorCellToChar Passage = '#'
 floorCellToChar Door = '+'
 
+floorCellWalkable :: FloorCell -> Bool
+floorCellWalkable Empty = False
+floorCellWalkable RoomFloor = True
+floorCellWalkable VertWall = False
+floorCellWalkable HorzWall = False
+floorCellWalkable Passage = True
+floorCellWalkable Door = True
+
 data Rogalik = Rogalik
   { rogalikBoard :: Board FloorCell
   , rogalikPlayerPos :: Cell
@@ -110,9 +118,13 @@ generateRogalik = do
   generateRooms
 
 rogalikMove :: Monad m => Dir -> StateT Rogalik m ()
-rogalikMove dir = do
-  playerPos <- rogalikPlayerPos <$> getState
-  updateState (\rogalik -> rogalik {rogalikPlayerPos = playerPos ^+^ dirV2 dir})
+rogalikMove dir = updateState $ \rogalik ->
+  let playerPos = rogalikPlayerPos rogalik
+      playerPos' = playerPos ^+^ dirV2 dir
+      board = rogalikBoard rogalik
+   in if floorCellWalkable $ (boardArray board) ! playerPos'
+      then rogalik {rogalikPlayerPos = playerPos'}
+      else rogalik
 
 renderRogalik :: Rogalik -> [String]
 renderRogalik rogalik =
