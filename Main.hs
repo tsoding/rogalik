@@ -6,6 +6,7 @@ import Control.Monad
 import Data.Functor
 import Control.Monad.Trans.State
 import Control.Monad.Trans.Class
+import Data.Foldable
 
 import Rogalik
 import Board
@@ -27,28 +28,25 @@ unlessM conditionM body = do
   condition <- conditionM
   unless condition body
 
+handleCommands :: String -> StateT Rogalik IO ()
+handleCommands commands =
+  for_ commands $ \command ->
+    case command of
+      's' -> rogalikMove D
+      'w' -> rogalikMove U
+      'a' -> rogalikMove L
+      'd' -> rogalikMove R
+      'q' -> quitRogalik
+      _ -> lift $ printf "Unknown command: %c\n" command
+
 gameLoop :: StateT Rogalik IO ()
 gameLoop =
   unlessM (rogalikQuit <$> get) $ do
     lift $ putStr "> "
     lift $ hFlush stdout
     line <- lift $ getLine
-    case line of
-      "j" -> do
-        rogalikMove D
-        printRogalik
-      "k" -> do
-        rogalikMove U
-        printRogalik
-      "h" -> do
-        rogalikMove L
-        printRogalik
-      "l" -> do
-        rogalikMove R
-        printRogalik
-      "q" -> quitRogalik
-      "help" -> lift $ printf "Use vim keybindings to navigate loooool\n"
-      _ -> lift $ printf "Unknown command: %s\n" line
+    handleCommands line
+    printRogalik
     gameLoop
 
 main :: IO ()
