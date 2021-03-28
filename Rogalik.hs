@@ -100,14 +100,19 @@ emptyRogalik :: Int -> Int -> Rogalik
 emptyRogalik width height =
   Rogalik
     { rogalikBoard = board
-    , rogalikPlayerPos = fst $ bounds $ boardArray board
+    , rogalikPlayerPos = (fst $ bounds $ boardArray board) ^+^ Cell 1 1
     , rogalikQuit = False
     }
   where
     board = mkBoard width height Empty
 
 generateRoomRect :: Monad m => Rect -> StateT Rogalik m ()
-generateRoomRect rect = rogalikUpdateBoard $ fillRect rect RoomFloor
+generateRoomRect rect@(Rect (Cell row1 col1) (Cell row2 col2)) = rogalikUpdateBoard $ do
+  fillRect (Rect (Cell row1 col1) (Cell row2 col1)) VertWall
+  fillRect (Rect (Cell row1 col2) (Cell row2 col2)) VertWall
+  fillRect (Rect (Cell row1 col1) (Cell row1 col2)) HorzWall
+  fillRect (Rect (Cell row2 col1) (Cell row2 col2)) HorzWall
+  fillRect (shrinkRect 1 rect) RoomFloor
 
 generateRooms :: Monad m => StateT Rogalik m ()
 generateRooms = do
