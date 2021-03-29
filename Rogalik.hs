@@ -22,8 +22,6 @@ dirV2 R = Cell 0 1
 dirV2 U = Cell (-1) 0
 dirV2 D = Cell 1 0
 
-data Index a = Index Int deriving (Eq, Ord, Ix, Show)
-
 data Room = Room
   { roomRect :: Rect
   , roomItems :: M.Map Cell Item
@@ -44,13 +42,8 @@ displayRoom room = do
   for_ (M.toList $ roomItems room) $ \(itemPos, item) ->
     modify $ fillCell (roomPos ^+^ itemPos) (itemChar item)
 
-data Place
-  = PlaceRoom (Index Room)
-  deriving (Show)
-
 data Player = Player
-  { playerPlace :: Place
-  , playerPos :: Cell
+  { playerPos :: Cell
   , playerGold :: Int
   , playerWeapons :: [Weapon]
   } deriving (Show)
