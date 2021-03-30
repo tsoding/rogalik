@@ -4,10 +4,13 @@ import Data.Array
 import Data.Foldable
 import qualified Data.Map as M
 import Data.Functor.Identity
+import System.Random
+import Control.Monad
 
 import Board
 import Items
 import Control.Monad.Trans.State
+import Control.Monad.Trans.Class
 
 data Dir
   = L
@@ -108,18 +111,34 @@ generateRoomRect rect@(Rect (Cell row1 col1) (Cell row2 col2)) = rogalikUpdateBo
 generateRoomAt :: Monad m => Cell -> Int -> Int -> StateT Rogalik m ()
 generateRoomAt pos rows cols = generateRoomRect (Rect pos (pos ^+^ Cell (rows - 1) (cols - 1)))
 
-generateRooms :: Monad m => StateT Rogalik m ()
-generateRooms = do
-  generateRoomAt (Cell 1 1) 7 7
-  generateRoomAt (Cell 1 9) 4 4
-  rogalikUpdateBoard $ do 
-    modify $ fillRect (Rect (Cell 2 7) (Cell 2 9)) Passage
-    modify $ fillCell (Cell 2 7) Door
-    modify $ fillCell (Cell 2 9) Door
+randomCell :: Rect -> IO Cell
+randomCell (Rect (Cell row1 col1) (Cell row2 col2)) = do
+  row <- randomRIO (row1, row2)
+  col <- randomRIO (col1, col2)
+  return $ Cell row col
 
-generateRogalik :: Monad m => StateT Rogalik m ()
+generateRooms :: StateT Rogalik IO ()
+generateRooms =
+  replicateM_ 2 $ do
+    board <- rogalikBoard <$> get
+    cell <- lift $ randomCell $ boardRect board
+    w <- lift $ randomRIO (3, 7)
+    h <- lift $ randomRIO (3, 7)
+    generateRoomAt cell w h
+
+placePlayer :: StateT Rogalik IO ()
+placePlayer = do
+  board <- rogalikBoard <$> get
+  let walkables = filter (floorCellWalkable . snd) $ assocs $ boardArray board
+  let n = length walkables
+  when (n == 0) $ error "Could not find any walkable cells for the player"
+  i <- lift $ randomRIO (0, n - 1)
+  modify $ \rogalik -> rogalik {rogalikPlayerPos = fst (walkables !! i)}
+
+generateRogalik :: StateT Rogalik IO ()
 generateRogalik = do
   generateRooms
+  placePlayer
 
 rogalikMove :: Monad m => Dir -> StateT Rogalik m ()
 rogalikMove dir = modify $ \rogalik ->
