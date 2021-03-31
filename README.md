@@ -7,7 +7,5 @@
 ## Quick Start
 
 ```console
-$ ghci Main.hs
-λ> main
-> help
+$ cabal v2-run
 ```
