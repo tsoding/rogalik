@@ -17,7 +17,7 @@ data Dir
   | R
   | U
   | D
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Enum, Show)
 
 dirV2 :: Dir -> Point
 dirV2 L = Point 0 (-1)
@@ -75,6 +75,62 @@ cellWalkable VertWall = False
 cellWalkable HorzWall = False
 cellWalkable Passage = True
 cellWalkable Door = True
+
+data Generator = Generator
+  { generatorBoard :: Board Cell
+  , generatorPos :: Point
+  , generatorDir :: Dir
+  } deriving (Show)
+
+mkGenerator :: Int -> Int -> Generator
+mkGenerator width height =
+  Generator
+    { generatorBoard = mkBoard width height Empty
+    , generatorPos = Point 0 0
+    , generatorDir = R
+    }
+
+pickOne :: [a] -> IO a
+pickOne [] = error "pickOne: empty list"
+pickOne xs = do
+  let n = length xs
+  index <- randomRIO (0, n - 1)
+  return $ xs !! index
+
+dirToChar :: Dir -> Char
+dirToChar L = '<'
+dirToChar R = '>'
+dirToChar U = '^'
+dirToChar D = 'v'
+
+renderGenerator :: Generator -> [String]
+renderGenerator generator =
+  boardToLists $
+  runIdentity $
+  execStateT
+    (do modify $
+          fillPoint
+            (generatorPos generator)
+            (dirToChar $ generatorDir generator)) $
+  cellToChar <$> generatorBoard generator
+
+generatorInit :: StateT Generator IO ()
+generatorInit = do
+  board <- generatorBoard <$> get
+  pos <- lift $ pickOne $ indices $ boardArray board
+  dir <- lift $ pickOne $ enumFrom $ toEnum 0
+  modify $ \generator -> generator {generatorPos = pos, generatorDir = dir}
+
+generatorPassage :: Dir -> Int -> StateT Generator IO ()
+generatorPassage = undefined
+
+generatorStep :: StateT Generator IO ()
+generatorStep = undefined
+
+generatorGo :: StateT Generator IO ()
+generatorGo = do
+  generatorInit
+  generatorPassage L 5
 
 data Rogalik = Rogalik
   { rogalikBoard :: Board Cell
